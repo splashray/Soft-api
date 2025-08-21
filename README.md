@@ -23,8 +23,8 @@ A robust Laravel REST API for managing user balances and transactional operation
 1. **Clone the repository**
 
 ```bash
-git clone <your-repository-url>
-cd <project-directory>
+git clone https://github.com/splashray/Soft-api.git
+cd Soft-api
 ```
 
 2. **Build and start services**
