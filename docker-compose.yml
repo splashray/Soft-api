@@ -1,0 +1,81 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile
+        container_name: softapi-app
+        volumes:
+            - ./:/var/www/html
+            - vendor:/var/www/html/vendor
+        working_dir: /var/www/html
+        environment:
+            - APP_ENV=local
+            - APP_DEBUG=1
+            - DB_CONNECTION=mysql
+            - DB_HOST=db
+            - DB_PORT=3306
+            - DB_DATABASE=softapi
+            - DB_USERNAME=softapi
+            - DB_PASSWORD=softapi
+        depends_on:
+            - db
+        networks:
+            - softnet
+
+    web:
+        image: nginx:1.25-alpine
+        container_name: softapi-web
+        ports:
+            - "8080:80"
+        volumes:
+            - ./:/var/www/html
+            - vendor:/var/www/html/vendor
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        depends_on:
+            - app
+        networks:
+            - softnet
+
+    db:
+        image: mysql:8.0
+        container_name: softapi-db
+        command:
+            [
+                "--default-authentication-plugin=mysql_native_password",
+                "--innodb_flush_log_at_trx_commit=1",
+                "--innodb_file_per_table=1",
+                "--skip-log-bin",
+            ]
+        restart: unless-stopped
+        environment:
+            - MYSQL_DATABASE=softapi
+            - MYSQL_USER=softapi
+            - MYSQL_PASSWORD=softapi
+            - MYSQL_ROOT_PASSWORD=root
+        ports:
+            - "33060:3306"
+        volumes:
+            - dbdata:/var/lib/mysql
+        networks:
+            - softnet
+
+    composer:
+        image: composer:2
+        container_name: softapi-composer
+        working_dir: /var/www/html
+        volumes:
+            - ./:/var/www/html
+            - vendor:/var/www/html/vendor
+        entrypoint: ["composer"]
+        profiles:
+            - tools
+        networks:
+            - softnet
+
+volumes:
+    dbdata:
+    vendor:
+
+networks:
+    softnet:
+        driver: bridge
